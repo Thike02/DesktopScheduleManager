@@ -1,0 +1,2 @@
+# DesktopScheduleManager
+Desktopに表示できる日常のタスクマネージャーです
