@@ -1,0 +1,36 @@
+{
+  "name": "notion-schedule-app",
+  "version": "1.0.0",
+  "description": "Notionから週間スケジュールを表示するデスクトップアプリ",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.notionschedule.app",
+    "productName": "週間スケジュール",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns"
+    },
+    "files": [
+      "main.js",
+      "renderer.js",
+      "index.html",
+      "package.json"
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@notionhq/client": "^5.7.0",
+    "dotenv": "^17.2.3",
+    "electron": "^40.0.0"
+  }
+}
