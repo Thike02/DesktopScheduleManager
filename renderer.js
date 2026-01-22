@@ -1,0 +1,205 @@
+// 曜日の日本語と英語のマッピング
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const dayNamesJa = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'];
+
+// 今週の日曜日から土曜日までの日付を取得
+function getWeekDates() {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const sunday = new Date(now);
+  sunday.setDate(now.getDate() - dayOfWeek);
+  sunday.setHours(0, 0, 0, 0);
+
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(sunday);
+    date.setDate(sunday.getDate() + i);
+    dates.push(date);
+  }
+  return dates;
+}
+
+// Notionから予定を取得
+async function fetchEvents() {
+  try {
+    const weekDates = getWeekDates();
+    const startOfWeek = weekDates[0];
+    const endOfWeek = new Date(weekDates[6]);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const result = await window.notionAPI.fetchEvents({
+      startDate: startOfWeek.toISOString().split('T')[0],
+      endDate: endOfWeek.toISOString().split('T')[0]
+    });
+
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+
+    return processEvents(result.data, weekDates);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    document.getElementById('status').textContent = 'エラーが発生しました: ' + error.message;
+    return [];
+  }
+}
+
+// イベントデータを処理
+function processEvents(results, weekDates) {
+  const events = [];
+
+  results.forEach(page => {
+    const props = page.properties;
+    const name = props.Name?.title?.[0]?.plain_text || '無題';
+    const date = props.Date?.date?.start;
+    const tags = props.Tag?.multi_select?.map(t => t.name) || [];
+    const repeatDay = props['Repeat Day']?.select?.name;
+
+    if (repeatDay && repeatDay !== 'None') {
+      // 繰り返し予定：今週の該当曜日すべてに追加
+      const dayIndex = dayNames.indexOf(repeatDay);
+      if (dayIndex !== -1) {
+        const targetDate = weekDates[dayIndex];
+        const time = date ? date.split('T')[1]?.substring(0, 5) : null;
+        
+        events.push({
+          name,
+          date: targetDate,
+          time,
+          tags,
+          isRecurring: true
+        });
+      }
+    } else if (date) {
+      // 通常の予定
+      const eventDate = new Date(date);
+      const time = date.split('T')[1]?.substring(0, 5);
+      
+      events.push({
+        name,
+        date: eventDate,
+        time,
+        tags,
+        isRecurring: false
+      });
+    }
+  });
+
+  return events;
+}
+
+// UIを描画
+function renderSchedule(events) {
+  const weekDates = getWeekDates();
+  const container = document.getElementById('weekContainer');
+  container.innerHTML = '';
+
+  weekDates.forEach((date, index) => {
+    const dayColumn = document.createElement('div');
+    dayColumn.className = 'day-column';
+
+    const header = document.createElement('div');
+    header.className = 'day-header';
+    header.textContent = `${dayNamesJa[index]} ${date.getMonth() + 1}/${date.getDate()}`;
+    dayColumn.appendChild(header);
+
+    // その日の予定をフィルタ
+    const dayEvents = events.filter(event => {
+      return event.date.toDateString() === date.toDateString();
+    });
+
+    // 時間順にソート
+    dayEvents.sort((a, b) => {
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      return a.time.localeCompare(b.time);
+    });
+
+    dayEvents.forEach(event => {
+      const card = document.createElement('div');
+      card.className = 'event-card';
+
+      if (event.time) {
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'event-time';
+        timeDiv.textContent = event.time;
+        card.appendChild(timeDiv);
+      }
+
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'event-title';
+      titleDiv.textContent = event.name;
+      card.appendChild(titleDiv);
+
+      if (event.tags.length > 0) {
+        const tagsDiv = document.createElement('div');
+        tagsDiv.className = 'event-tags';
+        event.tags.forEach(tag => {
+          const tagSpan = document.createElement('span');
+          tagSpan.className = 'tag';
+          tagSpan.textContent = tag;
+          tagsDiv.appendChild(tagSpan);
+        });
+        card.appendChild(tagsDiv);
+      }
+
+      dayColumn.appendChild(card);
+    });
+
+    container.appendChild(dayColumn);
+  });
+
+  document.getElementById('status').textContent = `最終更新: ${new Date().toLocaleTimeString('ja-JP')}`;
+}
+
+// 予定を追加
+async function addEvent() {
+  const name = document.getElementById('eventName').value;
+  const dateStr = document.getElementById('eventDate').value;
+  const tagsStr = document.getElementById('eventTags').value;
+  const repeatDay = document.getElementById('repeatDay').value;
+
+  if (!name || !dateStr) {
+    alert('予定名と日時を入力してください');
+    return;
+  }
+
+  const tags = tagsStr.split(',').map(t => t.trim()).filter(t => t);
+
+  try {
+    const result = await window.notionAPI.addEvent({
+      name,
+      date: dateStr,
+      tags,
+      repeatDay
+    });
+
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+
+    alert('予定を追加しました');
+
+    // フォームをクリア
+    document.getElementById('eventName').value = '';
+    document.getElementById('eventDate').value = '';
+    document.getElementById('eventTags').value = '';
+    document.getElementById('repeatDay').value = 'None';
+
+    // 再読み込み
+    await loadSchedule();
+  } catch (error) {
+    console.error('Error adding event:', error);
+    alert('予定の追加に失敗しました: ' + error.message);
+  }
+}
+
+// スケジュールを読み込み
+async function loadSchedule() {
+  const events = await fetchEvents();
+  renderSchedule(events);
+}
+
+// 初回読み込みと定期更新（1時間ごと）
+loadSchedule();
+setInterval(loadSchedule, 60 * 60 * 1000);

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>週間スケジュール</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 30px;
+      height: calc(100vh - 40px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    .add-event-form {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 2fr 2fr 1fr 1fr 100px;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    input, select, button {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    .week-container {
+      flex: 1;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    .day-column {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 15px;
+    }
+
+    .day-header {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #667eea;
+      text-align: center;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+    }
+
+    .event-card {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 4px solid #667eea;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .event-time {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .event-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    .event-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .tag {
+      background: #e3e8ff;
+      color: #667eea;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .status {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📅 週間スケジュール</h1>
+    
+    <div class="add-event-form">
+      <div class="form-row">
+        <input type="text" id="eventName" placeholder="予定名">
+        <input type="datetime-local" id="eventDate">
+        <input type="text" id="eventTags" placeholder="タグ (カンマ区切り)">
+        <select id="repeatDay">
+          <option value="None">繰り返しなし</option>
+          <option value="Sunday">毎週日曜</option>
+          <option value="Monday">毎週月曜</option>
+          <option value="Tuesday">毎週火曜</option>
+          <option value="Wednesday">毎週水曜</option>
+          <option value="Thursday">毎週木曜</option>
+          <option value="Friday">毎週金曜</option>
+          <option value="Saturday">毎週土曜</option>
+        </select>
+        <button onclick="addEvent()">追加</button>
+      </div>
+    </div>
+
+    <div class="status" id="status">読み込み中...</div>
+
+    <div class="week-container" id="weekContainer">
+      <div class="loading">データを取得中...</div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
