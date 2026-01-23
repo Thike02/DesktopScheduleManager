@@ -20,9 +20,13 @@
     },
     "files": [
       "main.js",
+      "preload.js",
       "renderer.js",
       "index.html",
       "package.json"
+    ],
+    "extraFiles": [
+      ".env"
     ]
   },
   "keywords": [],
@@ -30,7 +34,10 @@
   "license": "ISC",
   "dependencies": {
     "@notionhq/client": "^5.7.0",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "electron-builder": "^26.4.0",
     "electron": "^40.0.0"
   }
 }
