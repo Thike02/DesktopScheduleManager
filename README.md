@@ -72,7 +72,7 @@ Notionのデータベースと連携し、日々の予定を管理・通知し�
 
 ```bash
 # リポジトリのクローン
-git clone [https://github.com/yourname/DesktopScheduleManager.git](https://github.com/yourname/DesktopScheduleManager.git)
+git clone [https://github.com/Thike02/DesktopScheduleManager.git](https://github.com/yourname/DesktopScheduleManager.git)
 
 # 依存パッケージのインストール
 npm install
