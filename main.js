@@ -1,8 +1,14 @@
-require('dotenv').config();
-
 const { app, BrowserWindow, ipcMain, Notification } = require('electron');
 const path = require('path');
+const dotenv = require('dotenv');
 const { Client } = require('@notionhq/client');
+
+// exe化された場合でも.envを読み込めるようにパスを設定
+const envPath = app.isPackaged
+  ? path.join(path.dirname(app.getPath('exe')), '.env')
+  : path.join(__dirname, '.env');
+
+dotenv.config({ path: envPath });
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN;
 const DATABASE_ID = process.env.NOTION_DATABASE_ID;
@@ -10,6 +16,10 @@ const DATA_SOURCE_ID = process.env.NOTION_DATA_SOURCE_ID;
 
 if (!NOTION_TOKEN || !DATABASE_ID || !DATA_SOURCE_ID) {
   console.error('Error: .env file is missing required variables.');
+  // exe実行時にエラーが見えるようにダイアログを出すなどの処理を入れても良いが、一旦ログ出力のみ
+  if (app.isPackaged) {
+    console.error(`Looking for .env at: ${envPath}`);
+  }
   process.exit(1);
 }
 
@@ -186,9 +196,8 @@ async function sendTomorrowReminder() {
     const events = response.results;
     
     if (events.length === 0) {
-      // 予定がない場合もログには出す（通知はウザいかもしれないのでコメントアウト）
+      // 予定がない場合もログには出す
       console.log('明日の予定はありません');
-      // showNotification('明日の予定', '明日は予定がありません');
       return;
     }
     
