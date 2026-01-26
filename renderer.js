@@ -61,7 +61,7 @@ function processEvents(results, weekDates) {
       if (dayIndex !== -1) {
         const targetDate = weekDates[dayIndex];
         const time = date ? date.split('T')[1]?.substring(0, 5) : null;
-        
+
         events.push({
           name,
           date: targetDate,
@@ -72,9 +72,12 @@ function processEvents(results, weekDates) {
       }
     } else if (date) {
       // 通常の予定
-      const eventDate = new Date(date);
-      const time = date.split('T')[1]?.substring(0, 5);
-      
+      // タイムゾーンによる日付ズレを防ぐため、文字列から直接日付を生成
+      const [datePart, timePart] = date.split('T');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const eventDate = new Date(year, month - 1, day);
+      const time = timePart?.substring(0, 5);
+
       events.push({
         name,
         date: eventDate,
