@@ -103,6 +103,10 @@ function renderSchedule(events) {
 
     const header = document.createElement('div');
     header.className = 'day-header';
+    // 曜日ごとのクラスを追加
+    if (index === 0) header.classList.add('sunday');
+    if (index === 6) header.classList.add('saturday');
+
     header.textContent = `${dayNamesJa[index]} ${date.getMonth() + 1}/${date.getDate()}`;
     dayColumn.appendChild(header);
 
