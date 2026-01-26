@@ -10,22 +10,16 @@ const envPath = app.isPackaged
 
 dotenv.config({ path: envPath });
 
-const NOTION_TOKEN = process.env.NOTION_TOKEN;
-const DATABASE_ID = process.env.NOTION_DATABASE_ID;
-const DATA_SOURCE_ID = process.env.NOTION_DATA_SOURCE_ID;
+let notion;
+let store;
 
-if (!NOTION_TOKEN || !DATABASE_ID || !DATA_SOURCE_ID) {
-  console.error('Error: .env file is missing required variables.');
-  // exe実行時にエラーが見えるようにダイアログを出すなどの処理を入れても良いが、一旦ログ出力のみ
-  if (app.isPackaged) {
-    console.error(`Looking for .env at: ${envPath}`);
+function initNotion() {
+  if (!store) return;
+  const token = store.get('NOTION_TOKEN') || process.env.NOTION_TOKEN;
+  if (token) {
+    notion = new Client({ auth: token });
   }
-  process.exit(1);
 }
-
-const notion = new Client({
-  auth: NOTION_TOKEN
-});
 
 // ローカル時間で YYYY-MM-DD 形式を取得する関数（日付ズレ防止）
 function getLocalDateString(date) {
@@ -49,10 +43,30 @@ function createWindow() {
   win.loadFile('index.html');
 }
 
+ipcMain.handle('get-settings', () => {
+  return {
+    NOTION_TOKEN: store.get('NOTION_TOKEN') || process.env.NOTION_TOKEN || '',
+    NOTION_DATABASE_ID: store.get('NOTION_DATABASE_ID') || process.env.NOTION_DATABASE_ID || '',
+    NOTION_DATA_SOURCE_ID: store.get('NOTION_DATA_SOURCE_ID') || process.env.NOTION_DATA_SOURCE_ID || ''
+  };
+});
+
+ipcMain.handle('save-settings', (event, settings) => {
+  store.set('NOTION_TOKEN', settings.NOTION_TOKEN);
+  store.set('NOTION_DATABASE_ID', settings.NOTION_DATABASE_ID);
+  store.set('NOTION_DATA_SOURCE_ID', settings.NOTION_DATA_SOURCE_ID);
+  initNotion();
+  return { success: true };
+});
+
 ipcMain.handle('fetch-events', async (event, { startDate, endDate }) => {
+  if (!notion) return { success: false, error: 'NOTION_TOKEN_MISSING' };
+  const dataSourceId = store.get('NOTION_DATA_SOURCE_ID') || process.env.NOTION_DATA_SOURCE_ID;
+  if (!dataSourceId) return { success: false, error: 'DATA_SOURCE_ID_MISSING' };
+
   try {
     const response = await notion.dataSources.query({
-      data_source_id: DATA_SOURCE_ID,
+      data_source_id: dataSourceId,
       filter: {
         or: [
           {
@@ -80,6 +94,10 @@ ipcMain.handle('fetch-events', async (event, { startDate, endDate }) => {
 });
 
 ipcMain.handle('add-event', async (event, eventData) => {
+  if (!notion) return { success: false, error: 'NOTION_TOKEN_MISSING' };
+  const databaseId = store.get('NOTION_DATABASE_ID') || process.env.NOTION_DATABASE_ID;
+  if (!databaseId) return { success: false, error: 'DATABASE_ID_MISSING' };
+
   try {
     const properties = {
       Name: {
@@ -100,7 +118,7 @@ ipcMain.handle('add-event', async (event, eventData) => {
     }
 
     await notion.pages.create({
-      parent: { database_id: DATABASE_ID },
+      parent: { database_id: databaseId },
       properties: properties
     });
 
@@ -111,7 +129,11 @@ ipcMain.handle('add-event', async (event, eventData) => {
   }
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  const { default: Store } = await import('electron-store');
+  store = new Store();
+  initNotion();
+
   createWindow();
   setupDailyReminder();
 
@@ -157,6 +179,10 @@ function setupDailyReminder() {
 
 // 翌日の予定をリマインド
 async function sendTomorrowReminder() {
+  if (!notion || !store) return;
+  const dataSourceId = store.get('NOTION_DATA_SOURCE_ID') || process.env.NOTION_DATA_SOURCE_ID;
+  if (!dataSourceId) return;
+
   try {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1); // 明日の日付に設定
@@ -168,7 +194,7 @@ async function sendTomorrowReminder() {
     console.log(`Fetching events for: ${dateStr} (${dayName})`);
     
     const response = await notion.dataSources.query({
-      data_source_id: DATA_SOURCE_ID,
+      data_source_id: dataSourceId,
       filter: {
         or: [
           {

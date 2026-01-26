@@ -33,6 +33,12 @@ async function fetchEvents() {
     });
 
     if (!result.success) {
+      // 追加：設定エラーハンドリング
+      if (result.error === 'NOTION_TOKEN_MISSING' || result.error === 'DATA_SOURCE_ID_MISSING') {
+        document.getElementById('status').textContent = '設定が必要です。右上の⚙️から設定してください。';
+        openSettings(); // 設定画面を自動で開く
+        return [];
+      }
       throw new Error(result.error);
     }
 
@@ -103,6 +109,7 @@ function renderSchedule(events) {
 
     const header = document.createElement('div');
     header.className = 'day-header';
+    
     // 曜日ごとのクラスを追加
     if (index === 0) header.classList.add('sunday');
     if (index === 6) header.classList.add('saturday');
@@ -182,6 +189,12 @@ async function addEvent() {
     });
 
     if (!result.success) {
+      // 追加：設定エラーハンドリング
+      if (result.error === 'NOTION_TOKEN_MISSING') {
+        alert('Notion設定がされていません。');
+        openSettings();
+        return;
+      }
       throw new Error(result.error);
     }
 
@@ -205,6 +218,36 @@ async function addEvent() {
 async function loadSchedule() {
   const events = await fetchEvents();
   renderSchedule(events);
+}
+
+// 追加：設定モーダル関連の処理
+async function openSettings() {
+  const modal = document.getElementById('settingsModal');
+  modal.style.display = 'flex';
+  
+  const settings = await window.notionAPI.getSettings();
+  document.getElementById('settingToken').value = settings.NOTION_TOKEN || '';
+  document.getElementById('settingDatabaseId').value = settings.NOTION_DATABASE_ID || '';
+  document.getElementById('settingDataSourceId').value = settings.NOTION_DATA_SOURCE_ID || '';
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').style.display = 'none';
+}
+
+async function saveSettings() {
+  const token = document.getElementById('settingToken').value.trim();
+  const dbId = document.getElementById('settingDatabaseId').value.trim();
+  const dsId = document.getElementById('settingDataSourceId').value.trim();
+
+  await window.notionAPI.saveSettings({
+    NOTION_TOKEN: token,
+    NOTION_DATABASE_ID: dbId,
+    NOTION_DATA_SOURCE_ID: dsId
+  });
+
+  closeSettings();
+  loadSchedule();
 }
 
 // 初回読み込みと定期更新（1時間ごと）
