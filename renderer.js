@@ -60,6 +60,8 @@ function processEvents(results, weekDates) {
     const date = props.Date?.date?.start;
     const tags = props.Tag?.multi_select?.map(t => t.name) || [];
     const repeatDay = props['Repeat Day']?.select?.name;
+    // ページURLを取得
+    const url = page.url;
 
     if (repeatDay && repeatDay !== 'None') {
       // 繰り返し予定：今週の該当曜日すべてに追加
@@ -73,6 +75,7 @@ function processEvents(results, weekDates) {
           date: targetDate,
           time,
           tags,
+          url, // URLを追加
           isRecurring: true
         });
       }
@@ -89,6 +92,7 @@ function processEvents(results, weekDates) {
         date: eventDate,
         time,
         tags,
+        url, // URLを追加
         isRecurring: false
       });
     }
@@ -140,9 +144,18 @@ function renderSchedule(events) {
         card.appendChild(timeDiv);
       }
 
-      const titleDiv = document.createElement('div');
+      // タイトルをリンク要素として作成
+      const titleDiv = document.createElement('a');
       titleDiv.className = 'event-title';
       titleDiv.textContent = event.name;
+      // Notionリンクを設定（外部ブラウザで開くように設定が必要な場合がある）
+      if (event.url) {
+        titleDiv.href = event.url;
+        titleDiv.onclick = (e) => {
+          e.preventDefault();
+          window.open(event.url, '_blank');
+        };
+      }
       card.appendChild(titleDiv);
 
       if (event.tags.length > 0) {
