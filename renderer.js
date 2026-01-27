@@ -33,7 +33,7 @@ async function fetchEvents() {
     });
 
     if (!result.success) {
-      // 追加：設定エラーハンドリング
+      // 設定エラーハンドリング
       if (result.error === 'NOTION_TOKEN_MISSING' || result.error === 'DATA_SOURCE_ID_MISSING') {
         document.getElementById('status').textContent = '設定が必要です。右上の⚙️から設定してください。';
         openSettings(); // 設定画面を自動で開く
@@ -189,7 +189,7 @@ async function addEvent() {
     });
 
     if (!result.success) {
-      // 追加：設定エラーハンドリング
+      // 設定エラーハンドリング
       if (result.error === 'NOTION_TOKEN_MISSING') {
         alert('Notion設定がされていません。');
         openSettings();
@@ -220,7 +220,7 @@ async function loadSchedule() {
   renderSchedule(events);
 }
 
-// 追加：設定モーダル関連の処理
+// 設定モーダル関連の処理
 async function openSettings() {
   const modal = document.getElementById('settingsModal');
   modal.style.display = 'flex';
@@ -248,6 +248,20 @@ async function saveSettings() {
 
   closeSettings();
   loadSchedule();
+}
+
+// 入力フォームの表示・非表示を切り替える
+function toggleForm() {
+  const form = document.getElementById('addEventForm');
+  const btn = document.getElementById('toggleFormBtn');
+  
+  if (form.style.display === 'none' || form.style.display === '') {
+    form.style.display = 'block';
+    btn.textContent = '- 閉じる';
+  } else {
+    form.style.display = 'none';
+    btn.textContent = '+ 予定を追加';
+  }
 }
 
 // 初回読み込みと定期更新（1時間ごと）
