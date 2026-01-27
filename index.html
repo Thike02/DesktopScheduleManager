@@ -32,13 +32,6 @@
       position: relative;
     }
 
-    h1 {
-      text-align: center;
-      color: #333;
-      margin-bottom: 5px;
-      margin-top: 5px;
-      font-size: 1.2rem;
-    }
 
     .settings-btn {
       position: absolute;
@@ -54,6 +47,17 @@
     }
     .settings-btn:hover { color: #333; }
 
+    /* 位置の変更 */
+    .status {
+      position: absolute;
+      top: 18px; 
+      left: 15px;
+      font-size: 10px;
+      color: #aaa;
+      margin: 0;
+      text-align: left;
+    }
+
     .add-event-form {
       display: none;
       background: #f8f9fa;
@@ -64,7 +68,7 @@
 
     .toggle-form-btn {
       display: block;
-      margin: 0 auto 10px auto;
+      margin: 5px auto 10px auto;
       background: #e3e8ff;
       color: #667eea;
       border: none;
@@ -179,12 +183,6 @@
       color: #666;
     }
 
-    .status {
-      text-align: center;
-      margin-bottom: 5px;
-      color: #666;
-      font-size: 12px;
-    }
 
     .modal {
       display: none;
@@ -251,8 +249,9 @@
 </head>
 <body>
   <div class="container">
+    <div class="status" id="status">読み込み中...</div>
+    
     <button class="settings-btn" onclick="openSettings()">⚙️</button>
-    <h1>Week Schedule</h1>
     
     <button id="toggleFormBtn" class="toggle-form-btn" onclick="toggleForm()">＋ 予定を追加</button>
 
@@ -274,8 +273,6 @@
         <button onclick="addEvent()">追加</button>
       </div>
     </div>
-
-    <div class="status" id="status">読み込み中...</div>
 
     <div class="week-container" id="weekContainer">
       <div class="loading">データを取得中...</div>
