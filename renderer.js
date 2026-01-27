@@ -264,6 +264,11 @@ function toggleForm() {
   }
 }
 
+// アプリを再読み込み
+function reloadApp() {
+  window.location.reload();
+}
+
 // 初回読み込みと定期更新（1時間ごと）
 loadSchedule();
 setInterval(loadSchedule, 60 * 60 * 1000);
