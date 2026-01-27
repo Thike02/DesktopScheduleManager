@@ -1,9 +1,13 @@
-const { app, BrowserWindow, ipcMain, Notification, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification, Menu, Tray } = require('electron');
 const path = require('path');
 const { Client } = require('@notionhq/client');
+const fs = require('fs');
 
 let notion;
 let store;
+let mainWindow;
+let tray = null;
+let isQuitting = false;
 
 function initNotion() {
   if (!store) return;
@@ -22,10 +26,12 @@ function getLocalDateString(date) {
 }
 
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1000,
     height: 700,
     frame: false, // ウィンドウ枠を削除
+    icon: path.join(__dirname, 'icon.png'), // ウィンドウおよびタスクバー用アイコン設定
+    skipTaskbar: true, // 起動時からタスクバーに表示しない
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: true,
@@ -35,8 +41,49 @@ function createWindow() {
 
   // メニューバーを削除
   Menu.setApplicationMenu(null);
+  mainWindow.loadFile('index.html');
 
-  win.loadFile('index.html');
+  // ウィンドウを閉じる動作を「トレイへの格納」に変更
+  mainWindow.on('close', (event) => {
+    if (!isQuitting) {
+      event.preventDefault();
+      mainWindow.hide();
+      mainWindow.setSkipTaskbar(true); // 隠蔽時はタスクバーから確実に非表示
+    }
+  });
+
+  // 再表示時もトレイ専用アプリとしてタスクバーには出さない
+  mainWindow.on('show', () => {
+    mainWindow.setSkipTaskbar(true);
+  });
+}
+
+// 常駐用システムトレイの作成
+function createTray() {
+  const iconPath = path.join(__dirname, 'icon.png');
+  
+  if (fs.existsSync(iconPath)) {
+    tray = new Tray(iconPath);
+
+    const contextMenu = Menu.buildFromTemplate([
+      { label: '表示', click: () => mainWindow.show() },
+      { type: 'separator' },
+      { label: '完全に終了', click: () => {
+          isQuitting = true;
+          app.quit();
+        }
+      }
+    ]);
+
+    tray.setToolTip('週間スケジュール');
+    tray.setContextMenu(contextMenu);
+
+    tray.on('click', () => {
+      mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+    });
+  } else {
+    console.warn('Tray icon not found at: ' + iconPath);
+  }
 }
 
 ipcMain.handle('get-settings', () => {
@@ -131,6 +178,7 @@ app.whenReady().then(async () => {
   initNotion();
 
   createWindow();
+  createTray();
   setupDailyReminder();
 
   app.on('activate', () => {
@@ -142,7 +190,6 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit();
   }
 });
 
