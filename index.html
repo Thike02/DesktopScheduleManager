@@ -35,7 +35,7 @@
     h1 {
       text-align: center;
       color: #333;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
       margin-top: 5px;
       font-size: 1.2rem;
     }
@@ -55,10 +55,26 @@
     .settings-btn:hover { color: #333; }
 
     .add-event-form {
+      display: none;
       background: #f8f9fa;
       padding: 10px;
       border-radius: 8px;
       margin-bottom: 10px;
+    }
+
+    .toggle-form-btn {
+      display: block;
+      margin: 0 auto 10px auto;
+      background: #e3e8ff;
+      color: #667eea;
+      border: none;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .toggle-form-btn:hover {
+      background: #d0d7ff;
     }
 
     .form-row {
@@ -238,7 +254,9 @@
     <button class="settings-btn" onclick="openSettings()">⚙️</button>
     <h1>Week Schedule</h1>
     
-    <div class="add-event-form">
+    <button id="toggleFormBtn" class="toggle-form-btn" onclick="toggleForm()">＋ 予定を追加</button>
+
+    <div class="add-event-form" id="addEventForm">
       <div class="form-row">
         <input type="text" id="eventName" placeholder="予定名">
         <input type="datetime-local" id="eventDate">
