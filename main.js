@@ -1,21 +1,13 @@
-const { app, BrowserWindow, ipcMain, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification, Menu } = require('electron');
 const path = require('path');
-const dotenv = require('dotenv');
 const { Client } = require('@notionhq/client');
-
-// exe化された場合でも.envを読み込めるようにパスを設定
-const envPath = app.isPackaged
-  ? path.join(path.dirname(app.getPath('exe')), '.env')
-  : path.join(__dirname, '.env');
-
-dotenv.config({ path: envPath });
 
 let notion;
 let store;
 
 function initNotion() {
   if (!store) return;
-  const token = store.get('NOTION_TOKEN') || process.env.NOTION_TOKEN;
+  const token = store.get('NOTION_TOKEN');
   if (token) {
     notion = new Client({ auth: token });
   }
@@ -33,6 +25,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1000,
     height: 700,
+    frame: false, // ウィンドウ枠を削除
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: true,
@@ -40,14 +33,17 @@ function createWindow() {
     }
   });
 
+  // メニューバーを削除
+  Menu.setApplicationMenu(null);
+
   win.loadFile('index.html');
 }
 
 ipcMain.handle('get-settings', () => {
   return {
-    NOTION_TOKEN: store.get('NOTION_TOKEN') || process.env.NOTION_TOKEN || '',
-    NOTION_DATABASE_ID: store.get('NOTION_DATABASE_ID') || process.env.NOTION_DATABASE_ID || '',
-    NOTION_DATA_SOURCE_ID: store.get('NOTION_DATA_SOURCE_ID') || process.env.NOTION_DATA_SOURCE_ID || ''
+    NOTION_TOKEN: store.get('NOTION_TOKEN') || '',
+    NOTION_DATABASE_ID: store.get('NOTION_DATABASE_ID') || '',
+    NOTION_DATA_SOURCE_ID: store.get('NOTION_DATA_SOURCE_ID') || ''
   };
 });
 
@@ -61,7 +57,7 @@ ipcMain.handle('save-settings', (event, settings) => {
 
 ipcMain.handle('fetch-events', async (event, { startDate, endDate }) => {
   if (!notion) return { success: false, error: 'NOTION_TOKEN_MISSING' };
-  const dataSourceId = store.get('NOTION_DATA_SOURCE_ID') || process.env.NOTION_DATA_SOURCE_ID;
+  const dataSourceId = store.get('NOTION_DATA_SOURCE_ID');
   if (!dataSourceId) return { success: false, error: 'DATA_SOURCE_ID_MISSING' };
 
   try {
@@ -95,7 +91,7 @@ ipcMain.handle('fetch-events', async (event, { startDate, endDate }) => {
 
 ipcMain.handle('add-event', async (event, eventData) => {
   if (!notion) return { success: false, error: 'NOTION_TOKEN_MISSING' };
-  const databaseId = store.get('NOTION_DATABASE_ID') || process.env.NOTION_DATABASE_ID;
+  const databaseId = store.get('NOTION_DATABASE_ID');
   if (!databaseId) return { success: false, error: 'DATABASE_ID_MISSING' };
 
   try {
@@ -180,7 +176,7 @@ function setupDailyReminder() {
 // 翌日の予定をリマインド
 async function sendTomorrowReminder() {
   if (!notion || !store) return;
-  const dataSourceId = store.get('NOTION_DATA_SOURCE_ID') || process.env.NOTION_DATA_SOURCE_ID;
+  const dataSourceId = store.get('NOTION_DATA_SOURCE_ID');
   if (!dataSourceId) return;
 
   try {
