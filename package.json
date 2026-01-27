@@ -15,7 +15,7 @@
         "nsis",
         "portable"
       ],
-      "icon": "icon.png"
+      "icon": "icon.ico" 
     },
     "nsis": {
       "oneClick": false,
@@ -23,12 +23,8 @@
       "shortcutName": "WeekSchedule",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "installerIcon": "icon.png",
-      "uninstallerIcon": "icon.png"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "icon.png"
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico"
     },
     "files": [
       "main.js",
@@ -39,9 +35,6 @@
       "icon.png"
     ]
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@notionhq/client": "^5.7.0",
     "electron-store": "^11.0.2"
