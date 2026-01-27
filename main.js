@@ -74,10 +74,9 @@ if (!gotTheLock) {
 
   // 常駐用システムトレイの作成
   function createTray() {
-    // ビルド後は resources フォルダ内の .icon-ico を参照、開発時は直下の icon.png を参照
-    const iconPath = app.isPackaged 
-      ? path.join(process.resourcesPath, '.icon-ico', 'icon.ico')
-      : path.join(__dirname, 'icon.png');
+    // 開発時もビルド後も同じ icon.png を参照する
+    // ビルド後は asar の中に固められるが、Tray は asar 内の png を読み込める
+    const iconPath = path.join(__dirname, 'icon.png');
     
     if (fs.existsSync(iconPath)) {
       tray = new Tray(iconPath);
@@ -99,7 +98,7 @@ if (!gotTheLock) {
         mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
       });
     } else {
-      console.warn('Tray icon not found at: ' + iconPath);
+      console.error('Tray icon NOT found at:', iconPath);
     }
   }
 
