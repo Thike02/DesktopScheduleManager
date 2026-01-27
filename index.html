@@ -33,23 +33,26 @@
       position: relative;
     }
 
-
-    .settings-btn {
+    .header-actions {
       -webkit-app-region: no-drag;
       position: absolute;
       top: 15px;
       right: 15px;
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .action-btn {
       background: none;
       border: none;
       font-size: 1.2rem;
       cursor: pointer;
       color: #999;
       padding: 0;
-      z-index: 10;
     }
-    .settings-btn:hover { color: #333; }
+    .action-btn:hover { color: #333; }
 
-    /* 位置の変更 */
     .status {
       position: absolute;
       top: 18px; 
@@ -188,7 +191,6 @@
       color: #666;
     }
 
-
     .modal {
       display: none;
       position: fixed;
@@ -257,7 +259,10 @@
   <div class="container">
     <div class="status" id="status">読み込み中...</div>
     
-    <button class="settings-btn" onclick="openSettings()">⚙️</button>
+    <div class="header-actions">
+      <button class="action-btn" title="再読み込み" onclick="reloadApp()">⟳</button>
+      <button class="action-btn" title="設定" onclick="openSettings()">⚙️</button>
+    </div>
     
     <button id="toggleFormBtn" class="toggle-form-btn" onclick="toggleForm()">＋ 予定を追加</button>
 
